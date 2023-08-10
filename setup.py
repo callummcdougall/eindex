@@ -5,10 +5,7 @@ setup(
     version='0.1',
     packages=find_packages(),
     install_requires=[
-        'torch',
-        'jaxtyping',
-        'einops',
-        'numpy',
+        'torch'
     ],
     author='Callum McDougall',
     author_email='cal.s.mcdougall@gmail.com',  # Replace with your email
