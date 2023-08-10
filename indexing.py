@@ -1,11 +1,9 @@
 import torch
-import numpy as np
-from jaxtyping import Float, Int, Shaped
 from ._parsing import parse_string
 
 def eindex(
-    arr: Shaped[torch.Tensor, "..."],
-    indices: Int[torch.Tensor, "..."],
+    arr: torch.Tensor,
+    indices: torch.Tensor,
     pattern: str,
 ):
     '''
