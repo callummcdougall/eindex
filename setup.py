@@ -9,11 +9,10 @@ setup(
     ],
     author='Callum McDougall',
     author_email='cal.s.mcdougall@gmail.com',  # Replace with your email
-    description='A brief description of your project',  # Replace with your project's description
+    description='My interpretation of indexing with einops-like pattern notation',  # Replace with your project's description
     url='https://github.com/callummcdougall/eindex',
     classifiers=[
         'Programming Language :: Python :: 3',
-        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ],
 )
