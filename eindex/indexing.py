@@ -1,10 +1,9 @@
 import torch
+from typing import Union
 from ._parsing import parse_string
 
 def eindex(
-    arr: torch.Tensor,
-    indices: torch.Tensor,
-    pattern: str,
+    *tensors_and_pattern: Union[str, torch.Tensor]
 ):
     '''
     Some examples:
@@ -46,6 +45,12 @@ def eindex(
         ] = logprobs[b, s, labels[b, s]]
     '''
 
+    # Unpack and type-check arguments
+    arr, *indices, pattern = tensors_and_pattern
+    assert isinstance(arr, torch.Tensor), "First argument must be a tensor."
+    assert all(isinstance(i, torch.Tensor) for i in indices), "All indices must be tensors."
+    assert isinstance(pattern, str), "Last argument must be a string."
+
     pattern_indices = parse_string(pattern)
 
     # Check the dimensions are appropriate
@@ -78,7 +83,9 @@ def eindex(
         elif isinstance(item, list):
             # Get all the "within square brackets" indices, either `:` = slice(None) or ints
             idx = [int(i) if i.isdigit() else slice(None) for i in item]
-            _indices = indices[idx]
+            # Get the correct indices tensor
+            indices_for_this_item = indices.pop(0)
+            indices_for_this_item_sliced = indices_for_this_item[idx]
             # If the output shape is larger than the shape of `indices`, we need to reshape `indices` to add dummy dimensions.
             # e.g. in Example #3, we want our indices to eventually broadcast to our output shape of (batch, d_vocab), and since
             # `indices` only has shape (batch,), we need to add a dummy dimension for `d_vocab`. Also, we want all dimensions with
@@ -88,7 +95,7 @@ def eindex(
             for i, p in enumerate(pattern_indices_str):
                 if p not in item:
                     shape[i] = 1
-            full_idx_item = _indices.reshape(*shape)
+            full_idx_item = indices_for_this_item_sliced.reshape(*shape)
 
         full_idx.append(full_idx_item)
 
