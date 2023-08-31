@@ -1,5 +1,5 @@
 import torch
-from typing import Union
+from typing import Union, List
 from collections import defaultdict
 
 from ._parsing import parse_string
@@ -90,8 +90,8 @@ def eindex(
     #   Example #1:  ['batch', 'seq', ['batch', 'seq']]
     #   Example #2a: ['batch', 'seq', ['batch', 'seq', '0'], ['batch', 'seq', '1']]
     pattern_indices = parse_string(pattern)
-    pattern_indices_str = [p for p in pattern_indices if isinstance(p, str)]
-    pattern_indices_list = [p for p in pattern_indices if isinstance(p, list)]
+    pattern_indices_str: List[str] = [p for p in pattern_indices if isinstance(p, str)]
+    pattern_indices_list: List[List[str]] = [p for p in pattern_indices if isinstance(p, list)]
 
     # Check the dimensions are appropriate
     assert len(pattern_indices) == arr.ndim, "Invalid indices. There should be as many terms (strings or square bracket expressions) as there are dims in the first argument (arr)."
@@ -108,17 +108,14 @@ def eindex(
     dimension_sizes = {}
     for item in pattern_indices_list:
         # Check this square brackets expression matches the indexing tensor that it corresponds to
-        assert (
-            len(item) == len(index_tensor_list[index_tensor_counter].shape),
+        assert len(item) == len(index_tensor_list[index_tensor_counter].shape), \
             "Invalid indices. There should be as many terms in each square brackets expression as the corresponding indexing tensor has dimensions."
-        )
         # Once you've asserted that it does, add the dimension sizes to the dictionary (checking for contradictions)
         for dimension_name, dimension_size in zip(item, index_tensor_list[index_tensor_counter].shape):
-            assert (
-                dimension_sizes.get(dimension_name, dimension_size) == dimension_size,
+            assert dimension_sizes.get(dimension_name, dimension_size) == dimension_size, \
                 f"Incompatible dimensions. You've used {dimension_name!r} in 2 square bracket expressions, and it has 2 different values in those expressions."
-            )
-            dimension_sizes[dimension_name] = dimension_size
+            if not dimension_name.isdigit():
+                dimension_sizes[dimension_name] = dimension_size
         # If >1 index tensor is being used (e.g. #2b), increment the counter so we compare the next square brackets expression to the right indexing tensor
         if using_multiple_indices:
             index_tensor_counter += 1
@@ -138,7 +135,7 @@ def eindex(
             output_shape.append(dimension_sizes[item])
         elif isinstance(item, list):
             for dim_name in item:
-                if (dim_name not in pattern_indices_str) and (dim_name not in output_dims):
+                if (dim_name not in pattern_indices_str) and (dim_name not in output_dims) and not(dim_name.isdigit()):
                     output_dims.append(dim_name)
                     output_shape.append(dimension_sizes[dim_name])
     output_shape = tuple(output_shape)
@@ -186,10 +183,8 @@ def eindex(
             for dim_idx, dim_name in enumerate(output_dims):
                 if dim_name not in item:
                     shape[dim_idx] = 1
-            assert (
-                torch.tensor(shape).prod().item() == index_tensor[idx].numel(),
+            assert torch.tensor(shape).prod().item() == index_tensor[idx].numel(), \
                 "Something's gone wrong with the shape broadcasting. Please submit an issue at https://github.com/callummcdougall/eindex"
-            )
             # ! Append the reshaped index tensor to the full list of indices
             full_idx.append(index_tensor[idx].reshape(*shape))
 
