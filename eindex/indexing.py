@@ -104,21 +104,34 @@ def eindex(
     # Create a dicionary mapping names of dimensions to their sizes (purely based on the things that appear in square brackets)
     #   Example #1: ['batch', 'seq', ['batch', 'seq']] -> {'batch': batch_size, 'seq': seq_len}
     #   Example #4: ['batch', ['batch', 'seq', 'k']] -> {'batch': batch_size, 'seq': seq_len, 'k': k}
+    output_dim_counter = 0
     index_tensor_counter = 0
     dimension_sizes = {}
-    for item in pattern_indices_list:
-        # Check this square brackets expression matches the indexing tensor that it corresponds to
-        assert len(item) == len(index_tensor_list[index_tensor_counter].shape), \
-            "Invalid indices. There should be as many terms in each square brackets expression as the corresponding indexing tensor has dimensions."
-        # Once you've asserted that it does, add the dimension sizes to the dictionary (checking for contradictions)
-        for dimension_name, dimension_size in zip(item, index_tensor_list[index_tensor_counter].shape):
-            assert dimension_sizes.get(dimension_name, dimension_size) == dimension_size, \
-                f"Incompatible dimensions. You've used {dimension_name!r} in 2 square bracket expressions, and it has 2 different values in those expressions."
-            if not dimension_name.isdigit():
-                dimension_sizes[dimension_name] = dimension_size
-        # If >1 index tensor is being used (e.g. #2b), increment the counter so we compare the next square brackets expression to the right indexing tensor
-        if using_multiple_indices:
-            index_tensor_counter += 1
+    for item in pattern_indices:
+
+        # If the item is a string, we just add a single dimension: that of `arr`
+        if isinstance(item, str):
+            dimension_size = arr.shape[output_dim_counter]
+            assert dimension_sizes.get(item, dimension_size) == dimension_size, \
+                f"Incompatible dimensions. You've used {item!r} in 2 square bracket expressions, and it has 2 different values in those expressions."
+            dimension_sizes[item] = dimension_size
+            output_dim_counter += 1
+
+        # If the item is a list, we add multiple dimensions: all those of the appropriate index tensor
+        elif isinstance(item, list):
+            # Check this square brackets expression matches the indexing tensor that it corresponds to
+            assert len(item) == len(index_tensor_list[index_tensor_counter].shape), \
+                "Invalid indices. There should be as many terms in each square brackets expression as the corresponding indexing tensor has dimensions."
+            # Once you've asserted that it does, add the dimension sizes to the dictionary (checking for contradictions)
+            for dimension_name, dimension_size in zip(item, index_tensor_list[index_tensor_counter].shape):
+                assert dimension_sizes.get(dimension_name, dimension_size) == dimension_size, \
+                    f"Incompatible dimensions. You've used {dimension_name!r} in 2 square bracket expressions, and it has 2 different values in those expressions."
+                if not dimension_name.isdigit():
+                    dimension_sizes[dimension_name] = dimension_size
+            # If >1 index tensor is being used (e.g. #2b), increment the counter so we compare the next square brackets expression to the right indexing tensor
+            if using_multiple_indices:
+                index_tensor_counter += 1
+        
     if verbose:
         print("Dimension sizes:\n  " + "\n  ".join([f"{k}: {v}" for k, v in dimension_sizes.items()]))
 
