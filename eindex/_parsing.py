@@ -1,6 +1,7 @@
 import re
+from typing import List, Union
 
-def parse_string(input_string):
+def parse_string(input_string: str) -> List[Union[str, List[str]]]:
     # Check for invalid characters
     if re.search(r'[^a-zA-Z0-9_\[\] ]', input_string):
         raise ValueError("Invalid characters detected in the string.")
