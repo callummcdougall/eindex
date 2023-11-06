@@ -11,6 +11,8 @@ def eindex(
     '''
     Indexing inspired by einops notation: https://einops.rocks/
 
+    See colab for test cases: 
+
     
     ==========================================================================================
     ======================================== EXAMPLES ========================================
@@ -82,7 +84,7 @@ def eindex(
     arr, *index_tensor_list, pattern = tensors_and_pattern
     verbose = kwargs.pop("verbose", False)
     assert len(kwargs) == 0, f"Unexpected keyword arguments: {kwargs.keys()}"
-    assert isinstance(arr, torch.Tensor), "First argument must be a tensor."
+    # assert isinstance(arr, torch.Tensor), "First argument must be a tensor."
     assert all(isinstance(i, torch.Tensor) for i in index_tensor_list), "All indices must be tensors."
     assert isinstance(pattern, str), "Last argument must be a string."
 
@@ -91,7 +93,6 @@ def eindex(
     #   Example #2a: ['batch', 'seq', ['batch', 'seq', '0'], ['batch', 'seq', '1']]
     pattern_indices = parse_string(pattern)
     pattern_indices_str: List[str] = [p for p in pattern_indices if isinstance(p, str)]
-    pattern_indices_list: List[List[str]] = [p for p in pattern_indices if isinstance(p, list)]
 
     # Check the dimensions are appropriate
     assert len(pattern_indices) == arr.ndim, "Invalid indices. There should be as many terms (strings or square bracket expressions) as there are dims in the first argument (arr)."
@@ -156,7 +157,6 @@ def eindex(
         
 
     # Start constructing the index `full_idx`, by appending t.arange objects or tensors to it
-    output_dim_counter = 0
     index_tensor_counter = 0
     full_idx = []
     for (item, dim_size) in zip(pattern_indices, arr.shape):
@@ -168,8 +168,7 @@ def eindex(
         
         if isinstance(item, str):
             shape = [1] * output_ndim
-            shape[output_dim_counter] = dim_size
-            output_dim_counter += 1
+            shape[output_dims.index(item)] = dim_size
             # ! Append the broadcasted torch.arange object to the full list of indices
             full_idx.append(torch.arange(dim_size).reshape(*shape))
         
