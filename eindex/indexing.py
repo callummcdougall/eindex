@@ -1,11 +1,14 @@
+import numpy as np
 import torch
 from typing import Union, List
 from collections import defaultdict
 
+Arr = np.ndarray
+
 from ._parsing import parse_string
 
 def eindex(
-    *tensors_and_pattern: Union[str, torch.Tensor],
+    *tensors_and_pattern: Union[str, Union[Arr, torch.Tensor]],
     **kwargs,
 ):
     '''
@@ -84,9 +87,12 @@ def eindex(
     arr, *index_tensor_list, pattern = tensors_and_pattern
     verbose = kwargs.pop("verbose", False)
     assert len(kwargs) == 0, f"Unexpected keyword arguments: {kwargs.keys()}"
-    # assert isinstance(arr, torch.Tensor), "First argument must be a tensor."
-    assert all(isinstance(i, torch.Tensor) for i in index_tensor_list), "All indices must be tensors."
     assert isinstance(pattern, str), "Last argument must be a string."
+    
+    # Convert everything to torch tensors (make sure that we remember whether it was originally a numpy array)
+    orig_type = "torch" if isinstance(arr, torch.Tensor) else "numpy"
+    arr = torch.from_numpy(arr) if orig_type == "numpy" else arr
+    index_tensor_list = [torch.from_numpy(i) if isinstance(i, np.ndarray) else i for i in index_tensor_list]
 
     # Parse the pattern string into a list of strings and lists
     #   Example #1:  ['batch', 'seq', ['batch', 'seq']]
@@ -200,4 +206,9 @@ def eindex(
             # ! Append the reshaped index tensor to the full list of indices
             full_idx.append(index_tensor[idx].reshape(*shape))
 
-    return arr[full_idx]
+    arr_indexed = arr[full_idx]
+
+    if orig_type == "numpy":
+        arr_indexed = arr_indexed.numpy()
+
+    return arr_indexed
