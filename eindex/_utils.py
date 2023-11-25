@@ -28,4 +28,4 @@ def check_dimension_compatability(pattern_and_dimensions_string: str, dimensions
         previous_dim_values = re.findall(f'{dimension}=(\d+)', pattern_and_dimensions_string)
         previous_dim_values = [int(x) for x in previous_dim_values]
         assert all([x == previous_dim_values[0] for x in previous_dim_values]), \
-            f'Incompatible sizes for {dimension!r} dimension.\nBased on your inputs, the inferred dimension sizes are {pattern_and_dimensions_string!r}.'
+            f'Incompatible sizes for {dimension!r} dimension; it means different things at different occurrences in your string pattern.\nBased on your inputs, the inferred dimension sizes are {pattern_and_dimensions_string!r}.'
