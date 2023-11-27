@@ -9,7 +9,14 @@ def parse_string(input_string):
         "batch seq [batch seq]" -> (['batch', 'seq', ['batch', 'seq']], [0, 0, [0, 0]])
 
         "batch seq [batch seq+1]" -> (['batch', 'seq', ['batch', 'seq']], [0, 0, [0, 1]])
+    
+    Also checks for an einops operation (see docstring of main `eindex` function).
     '''
+    # Check for an einops operation
+    einops_operation = None
+    if " -> " in input_string:
+        input_string, einops_operation = input_string.split(" -> ")[:2]
+
     # Check for invalid characters
     if re.search(r'[^a-zA-Z0-9\+_\[\] ]', input_string):
         raise ValueError("Invalid characters detected in the string.")
@@ -36,4 +43,4 @@ def parse_string(input_string):
             result.append(segment[1].split('+')[0])
             offsets.append(int(segment[1].split('+')[1]) if '+' in segment[1] else 0)
     
-    return result, offsets
+    return result, offsets, einops_operation

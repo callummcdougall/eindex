@@ -2,6 +2,7 @@ import numpy as np
 import re
 import torch
 from typing import Union, List
+import einops
 
 Arr = np.ndarray
 
@@ -65,6 +66,14 @@ def eindex(
 
             pattern = "batch seq [batch seq+1]"
 
+        # (6) If we want to rearrange the output, we can append -> onto the end. Functionally, this just adds an einops
+              rearrange operation. It's only necessary when the order of appearance of the dimensions in the pattern
+              doesn't match what you want the final shape to be.
+
+            output[seq, batch] = logrobs[batch, seq, labels[batch, seq]]
+
+            pattern = "batch seq [batch seq] -> seq batch"
+
             
     ==========================================================================================
     ======================== ROUGH SUMMARY OF HOW THIS FUNCTION WORKS ========================
@@ -105,7 +114,7 @@ def eindex(
     #   Example #1:  ['batch', 'seq', ['batch', 'seq']] and [0, 0, [0, 0]]
     #   Example #2a: ['batch', 'seq', ['batch', 'seq', '0'], ['batch', 'seq', '1']] and [0, 0, [0, 0], [0, 0]]
     #   Example #5: ['batch', 'seq', ['batch', 'seq+1']] and [0, 0, [0, 1]]
-    pattern_indices, pattern_offsets = parse_string(pattern)
+    pattern_indices, pattern_offsets, einops_operation = parse_string(pattern)
     pattern_indices_str: List[str] = [p for p in pattern_indices if isinstance(p, str)]
 
     # Check the dimensions are appropriate
@@ -135,7 +144,6 @@ def eindex(
             pattern_and_dimensions_string = label_dimension(pattern_and_dimensions_string, item, dimension_size)
             dimension_sizes[item] = dimension_size
             dimension_offset_sizes[item] = max(dimension_offset_sizes.get(item, 0), item_offset)
-            output_dim_counter += 1
 
         # If the item is a list, we add multiple dimensions: all those of the appropriate index tensor
         elif isinstance(item, list):
@@ -153,6 +161,8 @@ def eindex(
             # If >1 index tensor is being used (e.g. #2b), increment the counter so we compare the next square brackets expression to the right indexing tensor
             if using_multiple_indices:
                 index_tensor_counter += 1
+        
+        output_dim_counter += 1
 
     # Once we've labelled everything, check if there are any errors
     check_dimension_compatability(pattern_and_dimensions_string, dimension_sizes.keys())
@@ -179,8 +189,6 @@ def eindex(
                     output_shape.append(dimension_sizes[dimension_name] - dimension_offset_sizes[dimension_name])
     output_shape = tuple(output_shape)
     output_ndim = len(output_shape)
-
-        
 
     # Start constructing the index `full_idx`, by appending t.arange objects or tensors to it
     # Note, to avoid confusion:
@@ -266,10 +274,39 @@ def eindex(
             full_idx_item = index_tensor[idx].reshape(*shape)
             full_idx.append(full_idx_item )
 
-
+    # Index using the full array
     arr_indexed = arr[full_idx]
+
+    # If there was an einops operation, apply it
+    if einops_operation is not None:
+        einops_dims = einops_operation.split(" ")
+        if einops_dims == output_dims:
+            # In this case, the output dimensions are already correct, and we don't need an einops operation
+            pass
+        else:
+            assert set(einops_dims) == set(output_dims), \
+                "The dimensions in your einops operation, i.e. the part after '->', don't match the inferred output dimensions of your indexing operation." + \
+                f"\nInferred output dimensions: {output_dims}" + \
+                f"\nYour einops operation: {einops_dims}"
+            einops_operation = f"{' '.join(output_dims)} -> {einops_operation}"
+            arr_indexed = einops.rearrange(arr_indexed, einops_operation)
 
     if orig_type == "numpy":
         arr_indexed = arr_indexed.numpy()
 
     return arr_indexed
+
+
+# BATCH_SIZE = 32
+# SEQ_LEN = 5
+# D_VOCAB = 100
+
+# logprobs = t.randn(BATCH_SIZE, SEQ_LEN, D_VOCAB).log_softmax(-1)
+# labels = t.randint(0, D_VOCAB, (BATCH_SIZE, SEQ_LEN))
+
+# output_1A = eindex(logprobs, labels, "batch seq [batch seq]")
+# output_1B = eindex(logprobs, labels, "batch seq [batch seq] -> batch seq")
+# output_2 = eindex(logprobs, labels, "batch seq [batch seq] -> seq batch")
+
+# assert t.allclose(output_1A, output_2.T)
+# assert t.allclose(output_1B, output_2.T)
