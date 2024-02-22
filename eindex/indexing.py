@@ -11,9 +11,11 @@ from ._utils import label_dimension, check_dimension_compatability
 
 @overload
 def eindex(*tensors_and_pattern: Union[str, Arr], **kwargs) -> Arr:
+    ...
 
 @overload
 def eindex(*tensors_and_pattern: Union[str, torch.Tensor], **kwargs) -> torch.Tensor:
+    ...
 
 def eindex(
     *tensors_and_pattern: Union[str, Union[Arr, torch.Tensor]],
