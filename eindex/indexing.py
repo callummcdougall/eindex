@@ -1,7 +1,7 @@
 import numpy as np
 import re
 import torch
-from typing import Union, List
+from typing import Union, List, overload
 import einops
 
 Arr = np.ndarray
@@ -9,10 +9,16 @@ Arr = np.ndarray
 from ._parsing import parse_string
 from ._utils import label_dimension, check_dimension_compatability
 
+@overload
+def eindex(*tensors_and_pattern: Union[str, Arr], **kwargs) -> Arr:
+
+@overload
+def eindex(*tensors_and_pattern: Union[str, torch.Tensor], **kwargs) -> torch.Tensor:
+
 def eindex(
     *tensors_and_pattern: Union[str, Union[Arr, torch.Tensor]],
     **kwargs,
-):
+) -> Union[Arr, torch.Tensor]:
     '''
     Indexing inspired by einops notation: https://einops.rocks/
 
