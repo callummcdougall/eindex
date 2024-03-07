@@ -9,12 +9,15 @@ Arr = np.ndarray
 from ._parsing import parse_string
 from ._utils import label_dimension, check_dimension_compatability
 
+# Type signature: eindex supports having first argument be a tensor and subsequent array arguments being either tensors
+# or numpy arrays (because we can index into a tensor with a numpy array). The last argument must be a string.
+
 @overload
 def eindex(*tensors_and_pattern: Union[str, Arr], **kwargs) -> Arr:
     ...
 
 @overload
-def eindex(*tensors_and_pattern: Union[str, torch.Tensor], **kwargs) -> torch.Tensor:
+def eindex(first_tensor: torch.Tensor, *tensors_and_pattern: Union[str, Arr], **kwargs) -> torch.Tensor:
     ...
 
 def eindex(
