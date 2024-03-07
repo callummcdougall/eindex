@@ -13,11 +13,18 @@ from ._utils import label_dimension, check_dimension_compatability
 # or numpy arrays (because we can index into a tensor with a numpy array). The last argument must be a string.
 
 @overload
-def eindex(*tensors_and_pattern: Union[str, Arr], **kwargs) -> Arr:
+def eindex(
+    *tensors_and_pattern: Union[str, Arr],
+    **kwargs,
+) -> Arr:
     ...
 
 @overload
-def eindex(first_tensor: torch.Tensor, *tensors_and_pattern: Union[str, Arr], **kwargs) -> torch.Tensor:
+def eindex(
+    first_tensor: torch.Tensor,
+    *tensors_and_pattern: Union[str, Arr, torch.Tensor],
+    **kwargs,
+) -> torch.Tensor:
     ...
 
 def eindex(
