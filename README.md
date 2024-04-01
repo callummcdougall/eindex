@@ -28,4 +28,4 @@ output[batch, seq] = logprobs[batch, seq, labels[batch, seq]]
 
 See the accompanying [Colab notebook](https://colab.research.google.com/drive/1KbuRsoKTMrgjtOQgUDeam8GWX0k1YzmO?usp=sharing) (or [my blog](https://www.perfectlynormal.co.uk/blog-eindex)) for more on how to use this.
 
-<img src="https://raw.githubusercontent.com/callummcdougall/computational-thread-art/master/example_images/misc/arms2.png" width="320">
+<img src="https://raw.githubusercontent.com/callummcdougall/computational-thread-art/master/example_images/misc/indexing.png" width="320">
