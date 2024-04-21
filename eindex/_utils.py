@@ -25,7 +25,7 @@ def check_dimension_compatability(pattern_and_dimensions_string: str, dimensions
     '''
     for dimension in dimensions_list:
 
-        previous_dim_values = re.findall(f'{dimension}=(\d+)', pattern_and_dimensions_string)
+        previous_dim_values = re.findall(f'{dimension}' + r'=(\d+)', pattern_and_dimensions_string)
         previous_dim_values = [int(x) for x in previous_dim_values]
         assert all([x == previous_dim_values[0] for x in previous_dim_values]), \
             f'Incompatible sizes for {dimension!r} dimension.\n' \

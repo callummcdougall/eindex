@@ -2,4 +2,4 @@
 build
 dist
 *.egg-info/
-api.txt
+instructions.md
