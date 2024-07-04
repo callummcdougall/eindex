@@ -124,7 +124,7 @@ def eindex(
     assert isinstance(pattern, str), "Last argument must be a string."
     
     # Convert everything to torch tensors (make sure that we remember whether it was originally a numpy array)
-    orig_type = "torch" if isinstance(arr, torch.Tensor) else "numpy"
+    orig_type = "numpy" if isinstance(arr, np.ndarray) else "torch"
     arr = torch.from_numpy(arr) if orig_type == "numpy" else arr
     index_tensor_list = [torch.from_numpy(i) if isinstance(i, np.ndarray) else i for i in index_tensor_list]
 
