@@ -123,9 +123,8 @@ def eindex(
     assert len(kwargs) == 0, f"Unexpected keyword arguments: {kwargs.keys()}"
     assert isinstance(pattern, str), "Last argument must be a string."
     
-    # Convert everything to torch tensors (make sure that we remember whether it was originally a numpy array)
-    orig_type = "numpy" if isinstance(arr, np.ndarray) else "torch"
-    arr = torch.from_numpy(arr) if orig_type == "numpy" else arr
+    # If numpy, convert to torch tensors
+    arr = torch.from_numpy(arr) if isinstance(arr, np.ndarray) else arr
     index_tensor_list = [torch.from_numpy(i) if isinstance(i, np.ndarray) else i for i in index_tensor_list]
 
     # Parse the pattern string into a list of dimension names (and a list of offsets, if they exist)
