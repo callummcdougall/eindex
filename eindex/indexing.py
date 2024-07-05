@@ -124,7 +124,9 @@ def eindex(
     assert isinstance(pattern, str), "Last argument must be a string."
     
     # If numpy, convert to torch tensors
-    arr = torch.from_numpy(arr) if isinstance(arr, np.ndarray) else arr
+    # NOTE: remember the original type so we can convert back at the end
+    orig_is_numpy: bool = isinstance(arr, np.ndarray)
+    arr = torch.from_numpy(arr) if orig_is_numpy else arr
     index_tensor_list = [torch.from_numpy(i) if isinstance(i, np.ndarray) else i for i in index_tensor_list]
 
     # Parse the pattern string into a list of dimension names (and a list of offsets, if they exist)
@@ -308,7 +310,7 @@ def eindex(
             einops_operation = f"{' '.join(output_dims)} -> {einops_operation}"
             arr_indexed = einops.rearrange(arr_indexed, einops_operation)
 
-    if orig_type == "numpy":
+    if orig_is_numpy:
         arr_indexed = arr_indexed.numpy()
 
     return arr_indexed
